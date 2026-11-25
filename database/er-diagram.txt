@@ -1,0 +1,130 @@
+Project animal_care {
+  database_type: 'PostgreSQL'
+  Note: 'E-commerce, pets, shopping carts, orders, favorites, and product reviews.'
+}
+
+Table users {
+  id bigint [pk, increment]
+  email text [not null, unique]
+  password_hash text [not null]
+  full_name text [not null]
+  phone text
+  role text [not null, default: 'customer']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table pets {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  name text [not null]
+  species text [not null, note: 'dog | cat']
+  breed text
+  birth_date date
+  sex text
+  weight_kg numeric(6,2)
+  notes text
+  created_at timestamptz [not null]
+}
+
+Table categories {
+  id bigint [pk, increment]
+  parent_category_id bigint
+  name text [not null]
+  slug text [not null, unique]
+  description text
+  is_active boolean [not null]
+  created_at timestamptz [not null]
+}
+
+Table products {
+  id bigint [pk, increment]
+  category_id bigint [not null]
+  sku text [not null, unique]
+  slug text [not null, unique]
+  name text [not null]
+  description text
+  price numeric(10,2) [not null]
+  stock_quantity integer [not null]
+  target_species text [not null, note: 'dog | cat | all']
+  min_age_months integer [not null]
+  max_age_months integer
+  image_url text
+  is_active boolean [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table cart {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  status text [not null, note: 'active | converted | abandoned']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table cart_items {
+  id bigint [pk, increment]
+  cart_id bigint [not null]
+  product_id bigint [not null]
+  quantity integer [not null]
+  added_at timestamptz [not null]
+}
+
+Table orders {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  cart_id bigint [unique]
+  recipient_name text [not null]
+  recipient_phone text [not null]
+  shipping_address text [not null]
+  status text [not null]
+  total_amount numeric(12,2) [not null]
+  customer_note text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Table order_items {
+  id bigint [pk, increment]
+  order_id bigint [not null]
+  product_id bigint
+  product_name text [not null, note: 'Snapshot at time of purchase']
+  sku text
+  unit_price numeric(10,2) [not null]
+  quantity integer [not null]
+  line_total numeric(12,2) [not null, note: 'Generated from unit_price * quantity']
+}
+
+Table favorites {
+  user_id bigint [pk]
+  product_id bigint [pk]
+  created_at timestamptz [not null]
+}
+
+Table reviews {
+  id bigint [pk, increment]
+  user_id bigint [not null]
+  product_id bigint [not null]
+  rating smallint [not null, note: '1 through 5']
+  title text
+  body text
+  is_published boolean [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
+
+Ref: users.id < pets.user_id
+Ref: categories.id < categories.parent_category_id
+Ref: categories.id < products.category_id
+Ref: users.id < cart.user_id
+Ref: cart.id < cart_items.cart_id
+Ref: products.id < cart_items.product_id
+Ref: users.id < orders.user_id
+Ref: cart.id - orders.cart_id
+Ref: orders.id < order_items.order_id
+Ref: products.id < order_items.product_id
+Ref: users.id < favorites.user_id
+Ref: products.id < favorites.product_id
+Ref: users.id < reviews.user_id
+Ref: products.id < reviews.product_id
