@@ -13,13 +13,14 @@
 
 ## Текущие части
 
-- Backend: сервер и инструкция запуска находятся в [`backend/backend/`](backend/backend/README.md). API-контракт собран в [`docs/api-contract.md`](docs/api-contract.md).
-- База: SQL-скрипты находятся в [`database/database/`](database/database/schema.sql) в ветке `database`.
-- Frontend: ветка `frontend` пока содержит только заглушку; каталог, корзина и карточки ещё предстоит добавить и подключить к API.
+- Backend: сервер и инструкция запуска в [backend/backend/README.md](https://github.com/malikadorrer/Animal-Care/blob/backend/backend/README.md).
+- База: SQL-скрипты в [database/database/](https://github.com/malikadorrer/Animal-Care/tree/database/database) в ветке `database`.
+- Frontend: ветка `frontend` пока содержит только заглушку; интерфейс магазина ещё нужно добавить и подключить к API.
+- API-контракт: [docs/api-contract.md](docs/api-contract.md); проверки: [docs/testing-checklist.md](docs/testing-checklist.md).
 
 ## Запуск и проверка
 
-Следуйте инструкции backend для локального запуска API. Общую команду запуска frontend + backend и порядок чистой установки базы добавим после объединения веток. Сквозные проверки перечислены в [`docs/testing-checklist.md`](docs/testing-checklist.md); отмечайте их пройденными только после фактического запуска.
+Следуйте инструкции backend для локального запуска API. Общую команду запуска frontend + backend и порядок чистой установки базы добавим после объединения веток. Сквозные проверки отмечайте пройденными только после фактического запуска.
 
 ## Роли
 
