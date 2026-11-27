@@ -1,25 +1,33 @@
-# Контракт API для интеграции
+# API-контракт — фактический backend
 
-Базовый префикс: `/api`. Frontend и backend используют эти общие маршруты и поля.
+Ниже зафиксировано поведение `backend/server.js` из ветки `backend`. Все пути ниже имеют префикс `/api`.
 
-| Метод | Путь | Назначение | Данные |
+## Маршруты
+
+| Метод | Путь | Вход | Ответ |
 |---|---|---|---|
-| GET | `/products` | Каталог | query: `search`, `category_id`, `species`, `min_price`, `max_price`; ответ `items` |
-| GET | `/products/:id` | Карточка товара | `id`, `name`, `description`, `price`, `stock_quantity`, `target_species`, `image_url`, `category` |
-| POST | `/auth/register` | Регистрация | `full_name`, `email`, `password` |
-| POST | `/auth/login` | Вход | `email`, `password` |
-| GET, POST | `/pets` | Список/создание питомца | `name`, `species`, `breed`, `birth_date` |
-| GET | `/cart` | Корзина | позиции с `product_id`, `name`, `price`, `quantity`, `line_total`; итог `total` |
-| POST | `/cart/items` | Добавить товар | `product_id`, `quantity` |
-| PATCH | `/cart/items/:id` | Изменить количество | `quantity` |
-| DELETE | `/cart/items/:id` | Удалить позицию | понятный результат операции |
-| POST | `/orders` | Оформить заказ | `recipient_name`, `recipient_phone`, `shipping_address`, необязательное `customer_note` |
-| GET | `/orders/my` | Мои заказы | заказы с позициями текущего покупателя |
+| GET | `/health` | — | `{ status }` |
+| GET | `/products` | query: `q`, `category` (slug), `pet` (`dog/cat`), `minPrice`, `maxPrice`, `sort`, `limit`, `offset` | `{ items, pagination }` |
+| GET | `/products/:id` | ID товара | `{ item }` |
+| POST | `/auth/register` | `full_name`, `email`, `password`, optional `phone` | `{ user, token }` |
+| POST | `/auth/login` | `email`, `password` | `{ user, token }` |
+| GET | `/pets` | Bearer token | `{ items }` |
+| POST | `/pets` | `name`, `species`, optional `breed`, `birth_date`, `sex`, `weight_kg`, `notes` | `{ item }` |
+| GET | `/cart` | Bearer token | `{ cart: { id, items, total_amount } }` |
+| POST | `/cart/items` | `product_id`, optional `quantity` | `{ cart }` |
+| PATCH | `/cart/items/:id` | `quantity` | `{ cart }` |
+| DELETE | `/cart/items/:id` | ID позиции | `{ cart }` |
+| POST | `/orders` | `recipient_name`, `recipient_phone`, `shipping_address`, optional `customer_note` | `{ order }` (включает `items`) |
+| GET | `/orders/my` | Bearer token | `{ items }` — заказы с позициями |
 
-## Правила
+## Правила реализации
 
-- Закрытые маршруты требуют входа. Пользователь определяется сервером, переданный клиентом `user_id` не считается доверенным.
-- Формат ошибки: `{ "message": "Понятное сообщение" }`; использовать подходящий HTTP-статус (`400`, `401`, `404`, `409`, `500`).
-- Заказ, строки заказа, проверка/уменьшение остатка и очистка корзины выполняются одной транзакцией.
-- Поля БД: `users.full_name/email/password_hash`; `pets.species`; `products.stock_quantity/target_species`; `cart_items.quantity`; `orders.recipient_name/recipient_phone/shipping_address/total_amount`; `order_items.product_name/unit_price/quantity`.
-- Пароли и токены не возвращать в ответах и не сохранять в Git.
+- Закрытые маршруты используют `Authorization: Bearer <token>`. Сервер берёт владельца корзины, питомцев и заказов из токена.
+- Ошибки имеют вид `{ error: { code, message } }`. Важные коды: `VALIDATION_ERROR`, `INVALID_CREDENTIALS`, `PRODUCT_NOT_FOUND`, `CART_EMPTY`, `INSUFFICIENT_STOCK`, `CART_ITEM_NOT_FOUND`.
+- При добавлении товара `quantity` прибавляется к уже находящемуся в корзине количеству; PATCH задаёт новое итоговое количество.
+- Оформление заказа проходит транзакцией: создаёт заказ и позиции, проверяет/уменьшает остатки и переводит корзину в `converted`.
+- Поля и статусы должны совпадать со схемой PostgreSQL: у пользователей сервер возвращает `full_name`, `email`, `phone`, `role`; у корзины есть статус; товар содержит `stock_quantity`, `target_species`, `is_active`; ошибки стандартизированы вложенным `error`.
+
+## Отличия от прежнего черновика
+
+Используйте `q/category/pet/minPrice/maxPrice`, а не `search/category_id/species/min_price/max_price`; корзина отдаёт `total_amount`, а не `total`; ошибка вложена в `error`; фильтры и поля пользователя соответствуют текущему backend.
